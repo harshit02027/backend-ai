@@ -6,32 +6,39 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+app.get("/", (req, res) => {
+  res.send("AI backend is running");
+});
 
 app.post("/ai-advice", async (req, res) => {
   try {
     const { transactions } = req.body;
 
-    const summary = generateSummary(transactions);
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ error: "OpenAI API key missing" });
+    }
+
+    const summary = createSummary(transactions || []);
 
     const prompt = `
 You are a personal finance advisor.
 
-Analyze this data and give clear, short, actionable advice:
+Analyze this user's hostel/personal expense data:
 
 ${summary}
 
-Rules:
-- Be practical
-- Give numbers when possible
-- Suggest improvements
-- Keep it under 5 lines
+Give advice in simple language.
+Keep it under 5 lines.
+Give practical saving tips.
+Use INR values.
 `;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -42,36 +49,42 @@ Rules:
 
     const data = await response.json();
 
-    res.json({
-      advice: data.choices[0].message.content
-    });
+    if (!response.ok) {
+      return res.status(500).json({ error: data.error?.message || "OpenAI error" });
+    }
 
-  } catch (err) {
+    res.json({ advice: data.choices[0].message.content });
+  } catch (error) {
     res.status(500).json({ error: "AI failed" });
   }
 });
 
-function generateSummary(transactions) {
-  let income = 0, expense = 0, saving = 0;
-  let categories = {};
+function createSummary(transactions) {
+  let income = 0;
+  let expense = 0;
+  let saving = 0;
+  const categories = {};
 
   transactions.forEach(t => {
-    const amt = Number(t.amount);
+    const amount = Number(t.amount) || 0;
 
-    if (t.type === "income") income += amt;
+    if (t.type === "income") income += amount;
     if (t.type === "expense") {
-      expense += amt;
-      categories[t.category] = (categories[t.category] || 0) + amt;
+      expense += amount;
+      const cat = t.category || "Other";
+      categories[cat] = (categories[cat] || 0) + amount;
     }
-    if (t.type === "saving") saving += amt;
+    if (t.type === "saving") saving += amount;
   });
 
   return `
 Income: ₹${income}
 Expense: ₹${expense}
 Saving: ₹${saving}
-Top categories: ${JSON.stringify(categories)}
+Balance: ₹${income - expense - saving}
+Expense Categories: ${JSON.stringify(categories)}
 `;
 }
 
-app.listen(3000, () => console.log("AI server running"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`AI server running on port ${PORT}`));
