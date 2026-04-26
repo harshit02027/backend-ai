@@ -1,6 +1,6 @@
 const SUPABASE_URL = "https://rcrykyskjifzxmmmesbf.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcnlreXNramlmenhtbW1lc2JmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjEyNDAsImV4cCI6MjA5MjczNzI0MH0.Jnk86K8pBvIA5s4Ab63yzVwGJXEgNufJTfTzXGZDQvs";
-const AI_BACKEND_URL = "https://expensetracker-slq2.onrender.com";
+const AI_BACKEND_URL = "https://backend-ai-rusp.onrender.com/ai-advice";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 

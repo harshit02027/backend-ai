@@ -6,85 +6,76 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 app.get("/", (req, res) => {
-  res.send("AI backend is running");
+  res.send("AI backend is running with OpenRouter");
 });
 
 app.post("/ai-advice", async (req, res) => {
   try {
-    const { transactions } = req.body;
-
-    if (!OPENAI_API_KEY) {
-      return res.status(500).json({ error: "OpenAI API key missing" });
+    if (!OPENROUTER_API_KEY) {
+      return res.status(500).json({
+        error: "OPENROUTER_API_KEY is missing in Render environment variables"
+      });
     }
 
-    const summary = createSummary(transactions || []);
+    const { transactions } = req.body;
 
-    const prompt = `
-You are a personal finance advisor.
+    const limitedTransactions = (transactions || []).slice(0, 30);
 
-Analyze this user's hostel/personal expense data:
+    const summary = JSON.stringify(limitedTransactions);
 
-${summary}
-
-Give advice in simple language.
-Keep it under 5 lines.
-Give practical saving tips.
-Use INR values.
-`;
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://hostelexpensetracking.netlify.app",
+        "X-Title": "Expense Tracker"
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }]
+        model: "meta-llama/llama-3.1-8b-instruct:free",
+        messages: [
+          {
+            role: "user",
+            content: `
+You are a personal finance advisor.
+
+Analyze these transactions and give short, practical advice in simple language.
+
+Transactions:
+${summary}
+
+Keep response under 5 lines.
+Use INR values.
+`
+          }
+        ]
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(500).json({ error: data.error?.message || "OpenAI error" });
+      return res.status(500).json({
+        error: data.error?.message || "OpenRouter request failed"
+      });
     }
 
-    res.json({ advice: data.choices[0].message.content });
+    res.json({
+      advice: data.choices?.[0]?.message?.content || "No advice generated."
+    });
+
   } catch (error) {
-    res.status(500).json({ error: "AI failed" });
+    res.status(500).json({
+      error: "AI failed"
+    });
   }
 });
 
-function createSummary(transactions) {
-  let income = 0;
-  let expense = 0;
-  let saving = 0;
-  const categories = {};
-
-  transactions.forEach(t => {
-    const amount = Number(t.amount) || 0;
-
-    if (t.type === "income") income += amount;
-    if (t.type === "expense") {
-      expense += amount;
-      const cat = t.category || "Other";
-      categories[cat] = (categories[cat] || 0) + amount;
-    }
-    if (t.type === "saving") saving += amount;
-  });
-
-  return `
-Income: ₹${income}
-Expense: ₹${expense}
-Saving: ₹${saving}
-Balance: ₹${income - expense - saving}
-Expense Categories: ${JSON.stringify(categories)}
-`;
-}
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`AI server running on port ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`AI backend running on port ${PORT}`);
+});
