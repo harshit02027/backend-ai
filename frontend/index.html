@@ -92,12 +92,19 @@
     </div>
 
     <div class="panel insight-panel">
-      <h2>Insights</h2>
-      <div class="insight-box">
-        <p id="insightText">No data yet</p>
-      </div>
-      <button class="ai-btn" onclick="getAIAdvice()">🤖 Get AI Advice</button>
-    </div>
+  <h2>Insights</h2>
+
+  <div class="insight-box">
+    <p id="insightText">No data yet</p>
+  </div>
+
+  <textarea
+    id="userSituation"
+    placeholder="Tell AI your situation... Example: I live in hostel, I get ₹5000/month from home, I want to save money but spend too much on food."
+  ></textarea>
+
+  <button class="ai-btn" onclick="getAIAdvice()">🤖 Get Personal AI Advice</button>
+</div>
   </section>
 
   <main class="dashboard-grid">

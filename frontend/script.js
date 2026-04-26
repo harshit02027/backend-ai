@@ -409,13 +409,18 @@ async function getAIAdvice() {
     return;
   }
 
+  const situation = document.getElementById("userSituation").value.trim();
+
   showToast("AI is analyzing...", "normal");
 
   try {
     const response = await fetch(AI_BACKEND_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transactions: allTransactions })
+      body: JSON.stringify({
+        transactions: allTransactions,
+        situation: situation
+      })
     });
 
     const data = await response.json();

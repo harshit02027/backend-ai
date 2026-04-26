@@ -20,7 +20,7 @@ app.post("/ai-advice", async (req, res) => {
       });
     }
 
-    const { transactions } = req.body;
+    const { transactions, situation } = req.body;
 
     const limitedTransactions = (transactions || []).slice(0, 30);
 
@@ -39,15 +39,19 @@ app.post("/ai-advice", async (req, res) => {
         messages: [
           {
             role: "user",
-            content: `
+content: `
 You are a personal finance advisor.
 
-Analyze these transactions and give short, practical advice in simple language.
+Analyze these transactions and the user's personal situation.
+
+User situation:
+${situation || "No personal situation provided."}
 
 Transactions:
 ${summary}
 
-Keep response under 5 lines.
+Give simple, practical, personalized advice.
+Keep response under 6 lines.
 Use INR values.
 `
           }
