@@ -35,7 +35,7 @@ app.post("/ai-advice", async (req, res) => {
         "X-Title": "Expense Tracker"
       },
       body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct:free",
+        model: "openrouter/free",
         messages: [
           {
             role: "user",
